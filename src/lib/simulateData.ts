@@ -49,7 +49,7 @@ function randomNotes(): string | null {
     'Market day',
     'Rainy weather',
     'Good quality',
-    'Organic',
+    'Organicc',
     'Imported',
     'Local harvest',
   ];
