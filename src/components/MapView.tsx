@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { reverseGeocode, classifyLocationsBySupplyDemand } from '@/lib/utils';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import HeatmapLayer from './HeatmapLayer';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { PriceEntry, Location, UserType, RecommendationPair } from '@/types'; // Changed to type-only import
@@ -98,6 +99,14 @@ export default function MapView({
   // Classify locations by supply/demand
   const classifiedLocations = classifyLocationsBySupplyDemand(filteredEntries);
 
+  // Prepare heatmap points: [lat, lng, intensity]
+  const heatmapPoints: Array<[number, number, number]> = classifiedLocations.map((loc: any) => [
+    loc.location.latitude,
+    loc.location.longitude,
+    // Example: use number of entries as intensity, or adjust as needed
+    Math.max(1, loc.entries.length)
+  ]);
+
   const mapRef = useRef<L.Map | null>(null);
   const [popupInfo, setPopupInfo] = useState<any | null>(null);
 
@@ -146,64 +155,64 @@ export default function MapView({
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"
           />
+          {/* Heatmap overlay */}
+          <HeatmapLayer points={heatmapPoints} options={{ radius: 25, blur: 15, maxZoom: 12 }} />
           {/* Render supply/demand markers */}
-          {
-            classifiedLocations.map((loc: any, idx: number) => {
-              let iconColor = '';
-              let label = '';
-              if (loc.demandLevel === 'super_high_supply') {
-                iconColor = 'green';
-                label = 'Super High Supply';
-              } else if (loc.demandLevel === 'medium_high_supply') {
-                iconColor = 'lime';
-                label = 'Medium High Supply';
-              } else if (loc.demandLevel === 'super_high_demand') {
-                iconColor = 'red';
-                label = 'Super High Demand';
-              } else if (loc.demandLevel === 'medium_high_demand') {
-                iconColor = 'orange';
-                label = 'Medium High Demand';
-              }
-              if (!iconColor) return null;
-              const markerIcon = L.divIcon({
-                className: 'custom-supply-demand-marker',
-                html: `<div style=\"width:24px;height:24px;background:${iconColor};border-radius:50%;border:3px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3);\"></div>`
-              });
-              return (
-                <Marker key={idx} position={[loc.location.latitude, loc.location.longitude]} icon={markerIcon} eventHandlers={{ click: () => setPopupInfo({
-                  lat: loc.location.latitude,
-                  lng: loc.location.longitude,
-                  city: loc.location.municipality || '',
-                  province: loc.location.province || '',
-                  region: '',
-                  entries: loc.entries,
-                }) }}>
-                  <Popup minWidth={300} maxWidth={400}>
-                    <div className="p-2">
-                      <div className="font-bold text-base mb-1">{loc.location.municipality || 'Unknown City'}</div>
-                      <div className="text-xs text-gray-500 mb-2">
-                        {loc.location.province && `${loc.location.province}`}
-                      </div>
-                      <div className="mb-2 text-sm font-semibold">{label}</div>
-                      <div className="mb-2 text-xs">Farmers: {loc.farmers}, Buyers: {loc.buyers}</div>
-                      <div className="mb-2 text-sm font-semibold">Price Entries:</div>
-                      {loc.entries.length === 0 ? (
-                        <div className="text-xs text-gray-400">No price data for this city.</div>
-                      ) : (
-                        <ul className="text-xs space-y-1">
-                          {loc.entries.map((entry: any, idx2: number) => (
-                            <li key={idx2} className="border-b last:border-b-0 pb-1">
-                              <span className="font-medium">{entry.product.name}</span> - {formatCurrency(entry.price)} per {entry.product.unit} <span className="text-gray-500">({entry.userType})</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+          {classifiedLocations.map((loc: any, idx: number) => {
+            let iconColor = '';
+            let label = '';
+            if (loc.demandLevel === 'super_high_supply') {
+              iconColor = 'green';
+              label = 'Super High Supply';
+            } else if (loc.demandLevel === 'medium_high_supply') {
+              iconColor = 'lime';
+              label = 'Medium High Supply';
+            } else if (loc.demandLevel === 'super_high_demand') {
+              iconColor = 'red';
+              label = 'Super High Demand';
+            } else if (loc.demandLevel === 'medium_high_demand') {
+              iconColor = 'orange';
+              label = 'Medium High Demand';
+            }
+            if (!iconColor) return null;
+            const markerIcon = L.divIcon({
+              className: 'custom-supply-demand-marker',
+              html: `<div style=\"width:24px;height:24px;background:${iconColor};border-radius:50%;border:3px solid white;box-shadow:0 2px 4px rgba(0,0,0,0.3);\"></div>`
+            });
+            return (
+              <Marker key={idx} position={[loc.location.latitude, loc.location.longitude]} icon={markerIcon} eventHandlers={{ click: () => setPopupInfo({
+                lat: loc.location.latitude,
+                lng: loc.location.longitude,
+                city: loc.location.municipality || '',
+                province: loc.location.province || '',
+                region: '',
+                entries: loc.entries,
+              }) }}>
+                <Popup minWidth={300} maxWidth={400}>
+                  <div className="p-2">
+                    <div className="font-bold text-base mb-1">{loc.location.municipality || 'Unknown City'}</div>
+                    <div className="text-xs text-gray-500 mb-2">
+                      {loc.location.province && `${loc.location.province}`}
                     </div>
-                  </Popup>
-                </Marker>
-              );
-            })
-          }
+                    <div className="mb-2 text-sm font-semibold">{label}</div>
+                    <div className="mb-2 text-xs">Farmers: {loc.farmers}, Buyers: {loc.buyers}</div>
+                    <div className="mb-2 text-sm font-semibold">Price Entries:</div>
+                    {loc.entries.length === 0 ? (
+                      <div className="text-xs text-gray-400">No price data for this city.</div>
+                    ) : (
+                      <ul className="text-xs space-y-1">
+                        {loc.entries.map((entry: any, idx2: number) => (
+                          <li key={idx2} className="border-b last:border-b-0 pb-1">
+                            <span className="font-medium">{entry.product.name}</span> - {formatCurrency(entry.price)} per {entry.product.unit} <span className="text-gray-500">({entry.userType})</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
           {/* Popup for city/region info on map click */}
           {popupInfo && (
             <Marker position={[popupInfo.lat, popupInfo.lng]} eventHandlers={{ popupclose: () => setPopupInfo(null) }}>
