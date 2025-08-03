@@ -241,7 +241,7 @@ export function recordPriceEntrySubmission(userType: string, productId: string, 
 export function addToBatchPriceEntries(entry: PriceEntry) {
   const key = 'batch_price_entries';
   const batchRaw = localStorage.getItem(key);
-  let batch = batchRaw ? JSON.parse(batchRaw) : [];
+  const batch = batchRaw ? JSON.parse(batchRaw) : [];
   batch.push(entry);
   localStorage.setItem(key, JSON.stringify(batch));
 }
@@ -271,7 +271,7 @@ export const reverseGeocode = async (location: Location): Promise<Partial<Locati
     // Fallback logic: try to get barangay/municipality/province from multiple possible fields
     let barangay = address.suburb || address.village || address.neighbourhood || address.hamlet || address.quarter || address.barrio;
     let municipality = address.city || address.town || address.municipality || address.county || address.locality;
-    let province = address.state || address.province || address.region;
+    const province = address.state || address.province || address.region;
 
     // If barangay is missing but municipality is present and matches Unisan, set barangay to Unisan
     if (!barangay && municipality && municipality.toLowerCase().includes('unisan')) {

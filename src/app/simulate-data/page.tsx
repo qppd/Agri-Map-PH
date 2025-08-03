@@ -16,7 +16,7 @@ export default function SimulateDataPage() {
       setResult(data.message || "Simulation complete.");
     } catch (e: unknown) {
       let message = "Error occurred";
-      if (e && typeof e === "object" && "message" in e && typeof (e as any).message === "string") {
+      if (e && typeof e === "object" && "message" in e && typeof (e as { message: string }).message === "string") {
         message = (e as { message: string }).message;
       }
       setResult(message);

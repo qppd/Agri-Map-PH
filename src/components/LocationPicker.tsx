@@ -23,9 +23,6 @@ function LocationMarker({ value, onChange }: LocationPickerProps) {
     click(e) {
       onChange({ latitude: e.latlng.lat, longitude: e.latlng.lng });
     },
-    dragend(e) {
-      // Not used, marker is draggable
-    },
   });
   return (
     <Marker

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { UserType, AgriculturalProduct, TrafficStatus, MarketCondition, Location, PriceEntry, WeatherData } from '@/types';
-import { MARKET_CONDITIONS, TRAFFIC_STATUS } from '@/data/products';
+import { MARKET_CONDITIONS, TRAFFIC_STATUS, PHILIPPINE_AGRICULTURAL_PRODUCTS } from '@/data/products';
 import { getCurrentLocation, fetchWeatherData, reverseGeocode, canSubmitPriceEntry, recordPriceEntrySubmission } from '@/lib/utils';
 // Dynamically import LocationPicker to avoid SSR issues
 const LocationPicker = dynamic(() => import('./LocationPicker'), { ssr: false });
@@ -81,7 +81,7 @@ export default function InputForm({ userType, onSubmit, isSubmitting = false }: 
       location,
       trafficStatus,
       marketCondition,
-      weather: weatherData ?? null,
+      weather: weatherData ?? undefined,
       notes: notes.trim() ? notes.trim() : null,
       verified: false,
     };
@@ -129,6 +129,7 @@ export default function InputForm({ userType, onSubmit, isSubmitting = false }: 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Product Selection */}
         <ProductSelector
+          products={PHILIPPINE_AGRICULTURAL_PRODUCTS}
           selectedProduct={selectedProduct}
           onProductSelect={setSelectedProduct}
         />

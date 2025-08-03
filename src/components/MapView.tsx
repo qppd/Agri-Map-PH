@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { reverseGeocode, classifyLocationsBySupplyDemand } from '@/lib/utils';
+import { classifyLocationsBySupplyDemand } from '@/lib/utils';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import HeatmapLayer from './HeatmapLayer';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import type { PriceEntry, Location, UserType, RecommendationPair } from '@/types'; // Changed to type-only import
-import { formatCurrency, formatTimestamp } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 
 // Fix for default markers in React-Leaflet
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
@@ -28,7 +28,12 @@ interface MapViewProps {
 }
 
 // Custom marker icons for different user types
-const createCustomIcon = (userType: UserType, isSelected: boolean = false) => {
+interface CustomIconOptions {
+  userType: UserType;
+  isSelected?: boolean;
+}
+
+const createCustomIcon = ({ userType, isSelected = false }: CustomIconOptions) => {
   const colors = {
     buyer: '#3B82F6', // Blue
     farmer: '#10B981', // Green
@@ -66,7 +71,12 @@ const createCustomIcon = (userType: UserType, isSelected: boolean = false) => {
 };
 
 // Component to handle map updates
-function MapUpdater({ center, zoom }: { center: [number, number]; zoom: number }) {
+interface MapUpdaterProps {
+  center: [number, number];
+  zoom: number;
+}
+
+function MapUpdater({ center, zoom }: MapUpdaterProps) {
   const map = useMap();
   
   useEffect(() => {
@@ -79,7 +89,6 @@ function MapUpdater({ center, zoom }: { center: [number, number]; zoom: number }
 export default function MapView({ 
   priceEntries, 
   userLocation, 
-  selectedUserType, 
   selectedProduct,
   recommendations = [],
   className = '' 
@@ -127,14 +136,8 @@ export default function MapView({
   }
   const [popupInfo, setPopupInfo] = useState<PopupInfo | null>(null);
 
-  // Placeholder for map click handler (implement as needed)
-  const handleMapClick = () => {
-    // Implement map click logic if needed
-  };
-
   // Debug: print filtered entries
   useEffect(() => {
-    // eslint-disable-next-line no-console
     console.log('Filtered price entries:', filteredEntries);
   }, [filteredEntries]);
 
@@ -168,7 +171,7 @@ export default function MapView({
           </div>
         </div>
         {/* MapContainer and marker rendering */}
-        <MapContainer center={mapCenter} zoom={7} style={{ height: '500px', width: '100%' }} ref={mapRef as any}>
+        <MapContainer center={mapCenter} zoom={7} style={{ height: '500px', width: '100%' }} ref={mapRef as React.RefObject<L.Map>}>
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"

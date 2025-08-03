@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useMap } from 'react-leaflet';
 import 'leaflet.heat';
-import { LayerOptions } from 'leaflet';
 
 
 interface HeatmapLayerProps {
