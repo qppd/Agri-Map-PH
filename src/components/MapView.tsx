@@ -134,6 +134,7 @@ export default function MapView({
 
   // Debug: print filtered entries
   useEffect(() => {
+    // eslint-disable-next-line no-console
     console.log('Filtered price entries:', filteredEntries);
   }, [filteredEntries]);
 
@@ -175,7 +176,7 @@ export default function MapView({
           {/* Heatmap overlay */}
           <HeatmapLayer points={heatmapPoints} options={{ radius: 25, blur: 15, maxZoom: 12 }} />
           {/* Render supply/demand markers */}
-          {classifiedLocations.map((loc: any, idx: number) => {
+          {classifiedLocations.map((loc, idx: number) => {
             let iconColor = '';
             let label = '';
             if (loc.demandLevel === 'super_high_supply') {
@@ -218,7 +219,7 @@ export default function MapView({
                       <div className="text-xs text-gray-400">No price data for this city.</div>
                     ) : (
                       <ul className="text-xs space-y-1">
-                        {loc.entries.map((entry: any, idx2: number) => (
+                        {loc.entries.map((entry, idx2: number) => (
                           <li key={idx2} className="border-b last:border-b-0 pb-1">
                             <span className="font-medium">{entry.product.name}</span> - {formatCurrency(entry.price)} per {entry.product.unit} <span className="text-gray-500">({entry.userType})</span>
                           </li>
@@ -245,7 +246,7 @@ export default function MapView({
                     <div className="text-xs text-gray-400">No price data for this city.</div>
                   ) : (
                     <ul className="text-xs space-y-1">
-                      {popupInfo.entries.map((entry: any, idx: number) => (
+                      {popupInfo.entries.map((entry, idx: number) => (
                         <li key={idx} className="border-b last:border-b-0 pb-1">
                           <span className="font-medium">{entry.product.name}</span> - {formatCurrency(entry.price)} per {entry.product.unit} <span className="text-gray-500">({entry.userType})</span>
                         </li>

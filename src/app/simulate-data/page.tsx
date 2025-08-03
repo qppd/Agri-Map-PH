@@ -14,8 +14,12 @@ export default function SimulateDataPage() {
       if (!res.ok) throw new Error("Failed to generate data");
       const data = await res.json();
       setResult(data.message || "Simulation complete.");
-    } catch (e: any) {
-      setResult(e.message || "Error occurred");
+    } catch (e: unknown) {
+      let message = "Error occurred";
+      if (e && typeof e === "object" && "message" in e && typeof (e as any).message === "string") {
+        message = (e as { message: string }).message;
+      }
+      setResult(message);
     } finally {
       setLoading(false);
     }

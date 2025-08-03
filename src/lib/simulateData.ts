@@ -87,7 +87,9 @@ export async function simulateAndSaveEntries(count = 2000) {
       { condition: 'Cloudy', description: 'Cloudy', humidity: 75 + Math.floor(Math.random() * 10), temperature: +(25 + Math.random() * 6).toFixed(1) },
     ];
     const weather = randomFromArray(weatherConditions);
-    const entry: any = {
+    const entry: PriceEntry = {
+      id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2),
+      timestamp: new Date(),
       userType,
       product,
       price,

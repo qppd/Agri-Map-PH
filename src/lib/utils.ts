@@ -1,5 +1,15 @@
 // Recommend supply-demand balancing pairs using nearest-neighbor approach
-export function recommendSupplyDemandPairs(classifiedLocations: any[], maxDistanceKm = 50) {
+// Type for classified location
+interface ClassifiedLocation {
+  location: Location;
+  supplyLevel?: string | null;
+  demandLevel: string | null;
+  entries: PriceEntry[];
+  farmers: number;
+  buyers: number;
+}
+
+export function recommendSupplyDemandPairs(classifiedLocations: ClassifiedLocation[], maxDistanceKm = 50) {
   // Get high supply and high demand locations
   const supplyLocs = classifiedLocations.filter(l => l.supplyLevel === 'super_high_supply' || l.supplyLevel === 'medium_high_supply');
   const demandLocs = classifiedLocations.filter(l => l.demandLevel === 'super_high_demand' || l.demandLevel === 'medium_high_demand');
@@ -228,7 +238,7 @@ export function recordPriceEntrySubmission(userType: string, productId: string, 
 
 // Batch price entries utility (for future use)
 // I-save muna sa localStorage, tapos i-upload lahat kada 5 minutes or kapag online na
-export function addToBatchPriceEntries(entry: any) {
+export function addToBatchPriceEntries(entry: PriceEntry) {
   const key = 'batch_price_entries';
   const batchRaw = localStorage.getItem(key);
   let batch = batchRaw ? JSON.parse(batchRaw) : [];
@@ -236,7 +246,7 @@ export function addToBatchPriceEntries(entry: any) {
   localStorage.setItem(key, JSON.stringify(batch));
 }
 
-export function getBatchPriceEntries(): any[] {
+export function getBatchPriceEntries(): PriceEntry[] {
   const key = 'batch_price_entries';
   const batchRaw = localStorage.getItem(key);
   return batchRaw ? JSON.parse(batchRaw) : [];
