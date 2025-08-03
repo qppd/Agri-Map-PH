@@ -96,19 +96,36 @@ export default function MapView({
     ? priceEntries.filter((e: PriceEntry) => e.product.id === selectedProduct)
     : priceEntries;
 
-  // Classify locations by supply/demand
-  const classifiedLocations = classifyLocationsBySupplyDemand(filteredEntries);
+
+  // Define a type for classified location
+  interface ClassifiedLocation {
+    location: Location;
+    demandLevel: string | null;
+    supplyLevel?: string | null;
+    entries: PriceEntry[];
+    farmers: number;
+    buyers: number;
+  }
+
+  const classifiedLocations: ClassifiedLocation[] = classifyLocationsBySupplyDemand(filteredEntries);
 
   // Prepare heatmap points: [lat, lng, intensity]
-  const heatmapPoints: Array<[number, number, number]> = classifiedLocations.map((loc: any) => [
+  const heatmapPoints: Array<[number, number, number]> = classifiedLocations.map((loc) => [
     loc.location.latitude,
     loc.location.longitude,
-    // Example: use number of entries as intensity, or adjust as needed
     Math.max(1, loc.entries.length)
   ]);
 
   const mapRef = useRef<L.Map | null>(null);
-  const [popupInfo, setPopupInfo] = useState<any | null>(null);
+  interface PopupInfo {
+    lat: number;
+    lng: number;
+    city: string;
+    province: string;
+    region: string;
+    entries: PriceEntry[];
+  }
+  const [popupInfo, setPopupInfo] = useState<PopupInfo | null>(null);
 
   // Placeholder for map click handler (implement as needed)
   const handleMapClick = () => {
