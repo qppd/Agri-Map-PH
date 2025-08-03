@@ -1,29 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import { UserType, PriceEntry, Location } from '@/types';
+import { UserType, PriceEntry, Location, AgriculturalProduct } from '@/types';
 import { dataService } from '@/lib/dataService';
-import { getCurrentLocation, classifyLocationsBySupplyDemand, recommendSupplyDemandPairs } from '@/lib/utils';
+import { getCurrentLocation } from '@/lib/utils';
 import UserTypeSelector from '@/components/UserTypeSelector';
 import InputForm from '@/components/InputForm';
+import MapView from '@/components/MapView';
 import ProductSelector from '@/components/ProductSelector';
 import AIRecommender from '@/components/AIRecommender';
 import { PHILIPPINE_AGRICULTURAL_PRODUCTS } from '@/data/products';
 import { Map, TrendingUp, Users, Database, Leaf } from 'lucide-react';
-
-// Dynamically import MapView to avoid SSR issues with Leaflet
-const MapView = dynamic(() => import('@/components/MapView'), {
-  ssr: false,
-  loading: () => (
-    <div className="h-96 bg-gray-100 rounded-lg flex items-center justify-center">
-      <div className="text-center">
-        <Map className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-        <p className="text-gray-500">Loading map...</p>
-      </div>
-    </div>
-  )
-});
 
 export default function Home() {
   const [selectedUserType, setSelectedUserType] = useState<UserType | null>(null);
@@ -42,11 +29,7 @@ export default function Home() {
 
   // Subscribe to real-time price data
   useEffect(() => {
-    const unsubscribe = dataService.subscribeToPriceEntries((entries) => {
-      setPriceEntries(entries);
-      // Print loaded data to console
-      console.log('Loaded priceEntries from Firebase:', entries);
-    }, 500);
+    const unsubscribe = dataService.subscribeToPriceEntries(setPriceEntries, 500);
     return unsubscribe;
   }, []);
 
@@ -70,22 +53,9 @@ export default function Home() {
     }
   };
 
-  const selectedProductData = selectedProduct 
-    ? PHILIPPINE_AGRICULTURAL_PRODUCTS.find(p => p.id === selectedProduct)
+  const selectedProductData: AgriculturalProduct | null = selectedProduct 
+    ? PHILIPPINE_AGRICULTURAL_PRODUCTS.find(p => p.id === selectedProduct) || null
     : null;
-
-  // Filter price entries for current date only
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayEntries = priceEntries.filter(entry => {
-    const entryDate = new Date(entry.timestamp);
-    entryDate.setHours(0, 0, 0, 0);
-    return entryDate.getTime() === today.getTime();
-  });
-
-  // Compute classified locations and recommendations
-  const classifiedLocations = classifyLocationsBySupplyDemand(todayEntries, selectedProduct || undefined);
-  const recommendations = recommendSupplyDemandPairs(classifiedLocations, 50);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-blue-50 to-yellow-50">
@@ -197,7 +167,7 @@ export default function Home() {
                   <div className="w-full sm:w-64">
                     <ProductSelector
                       products={PHILIPPINE_AGRICULTURAL_PRODUCTS}
-                      selectedProduct={selectedProductData || null}
+                      selectedProduct={selectedProductData}
                       onProductSelect={(product) => setSelectedProduct(product?.id || null)}
                     />
                   </div>
@@ -220,11 +190,10 @@ export default function Home() {
               {/* Left Column - Map */}
               <div className="xl:col-span-2">
                 <MapView
-                  priceEntries={todayEntries}
+                  priceEntries={priceEntries}
                   userLocation={userLocation}
                   selectedUserType={selectedUserType}
                   selectedProduct={selectedProduct}
-                  recommendations={recommendations}
                 />
               </div>
 
@@ -243,9 +212,8 @@ export default function Home() {
                 <AIRecommender
                   userType={selectedUserType}
                   userLocation={userLocation}
-                  priceEntries={todayEntries}
+                  priceEntries={priceEntries}
                   selectedProduct={selectedProduct}
-                  recommendations={recommendations}
                 />
               </div>
             </div>
