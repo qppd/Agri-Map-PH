@@ -6,5 +6,8 @@ module.exports = {
   ],
   rules: {
     '@typescript-eslint/no-explicit-any': 'off',
+    // Optionally, also disable lint errors on build
+    'no-warning-comments': 'off',
   },
+  ignorePatterns: ['**/*.js', '**/*.cjs'],
 };
