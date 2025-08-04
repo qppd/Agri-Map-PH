@@ -119,12 +119,12 @@ export default function Login({ onClose }: LoginProps) {
         </button>
 
         {/* Setup Notice */}
-        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+        {/* <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-xs text-yellow-800">
             <strong>Note:</strong> If a sign-in method shows &quot;not enabled&quot; error, you need to enable it in your Firebase Console. 
             See <code>OAUTH_SETUP_GUIDE.md</code> for instructions.
           </p>
-        </div>
+        </div> */}
       </div>
 
       <div className="text-center mt-4">
