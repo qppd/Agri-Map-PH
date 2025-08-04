@@ -9,7 +9,7 @@ import {
   onAuthStateChanged,
   User
 } from 'firebase/auth';
-import { ref, set, get, push } from 'firebase/database';
+import { ref, set, get } from 'firebase/database';
 
 export interface AuthUser {
   uid: string;
@@ -61,19 +61,20 @@ export class AuthService {
 
       await this.saveUserToDatabase(authUser);
       return authUser;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Facebook sign-in error:', error);
       
       // Handle specific error codes
-      if (error.code === 'auth/operation-not-allowed') {
+      const firebaseError = error as { code?: string; message?: string };
+      if (firebaseError.code === 'auth/operation-not-allowed') {
         throw new Error('Facebook sign-in is not enabled. Please contact support or try another sign-in method.');
-      } else if (error.code === 'auth/popup-closed-by-user') {
+      } else if (firebaseError.code === 'auth/popup-closed-by-user') {
         throw new Error('Sign-in was cancelled');
-      } else if (error.code === 'auth/popup-blocked') {
+      } else if (firebaseError.code === 'auth/popup-blocked') {
         throw new Error('Pop-up was blocked by your browser. Please allow pop-ups and try again.');
-      } else if (error.code === 'auth/account-exists-with-different-credential') {
+      } else if (firebaseError.code === 'auth/account-exists-with-different-credential') {
         throw new Error('An account already exists with the same email but different sign-in method.');
-      } else if (error.code === 'auth/network-request-failed') {
+      } else if (firebaseError.code === 'auth/network-request-failed') {
         throw new Error('Network error. Please check your internet connection and try again.');
       }
       
@@ -98,19 +99,20 @@ export class AuthService {
 
       await this.saveUserToDatabase(authUser);
       return authUser;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Google sign-in error:', error);
       
       // Handle specific error codes
-      if (error.code === 'auth/operation-not-allowed') {
+      const firebaseError = error as { code?: string; message?: string };
+      if (firebaseError.code === 'auth/operation-not-allowed') {
         throw new Error('Google sign-in is not enabled. Please contact support or try another sign-in method.');
-      } else if (error.code === 'auth/popup-closed-by-user') {
+      } else if (firebaseError.code === 'auth/popup-closed-by-user') {
         throw new Error('Sign-in was cancelled');
-      } else if (error.code === 'auth/popup-blocked') {
+      } else if (firebaseError.code === 'auth/popup-blocked') {
         throw new Error('Pop-up was blocked by your browser. Please allow pop-ups and try again.');
-      } else if (error.code === 'auth/account-exists-with-different-credential') {
+      } else if (firebaseError.code === 'auth/account-exists-with-different-credential') {
         throw new Error('An account already exists with the same email but different sign-in method.');
-      } else if (error.code === 'auth/network-request-failed') {
+      } else if (firebaseError.code === 'auth/network-request-failed') {
         throw new Error('Network error. Please check your internet connection and try again.');
       }
       
@@ -135,19 +137,20 @@ export class AuthService {
 
       await this.saveUserToDatabase(authUser);
       return authUser;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('GitHub sign-in error:', error);
       
       // Handle specific error codes
-      if (error.code === 'auth/operation-not-allowed') {
+      const firebaseError = error as { code?: string; message?: string };
+      if (firebaseError.code === 'auth/operation-not-allowed') {
         throw new Error('GitHub sign-in is not enabled. Please contact support or try another sign-in method.');
-      } else if (error.code === 'auth/popup-closed-by-user') {
+      } else if (firebaseError.code === 'auth/popup-closed-by-user') {
         throw new Error('Sign-in was cancelled');
-      } else if (error.code === 'auth/popup-blocked') {
+      } else if (firebaseError.code === 'auth/popup-blocked') {
         throw new Error('Pop-up was blocked by your browser. Please allow pop-ups and try again.');
-      } else if (error.code === 'auth/account-exists-with-different-credential') {
+      } else if (firebaseError.code === 'auth/account-exists-with-different-credential') {
         throw new Error('An account already exists with the same email but different sign-in method.');
-      } else if (error.code === 'auth/network-request-failed') {
+      } else if (firebaseError.code === 'auth/network-request-failed') {
         throw new Error('Network error. Please check your internet connection and try again.');
       }
       
@@ -240,16 +243,22 @@ export class AuthService {
   }
 
   // Get user's submission history
-  public async getUserSubmissionHistory(userId: string): Promise<any[]> {
+  public async getUserSubmissionHistory(userId: string): Promise<{ id: string; timestamp: number; product: string; price: number; date: string }[]> {
     try {
       const userSubmissionsRef = ref(database, `userSubmissions/${userId}`);
       const snapshot = await get(userSubmissionsRef);
       
       if (snapshot.exists()) {
-        return Object.entries(snapshot.val()).map(([date, data]: [string, any]) => ({
-          date,
-          ...(data as object)
-        }));
+        return Object.entries(snapshot.val()).map(([date, data]) => {
+          const submissionData = data as { id?: string; timestamp?: number; product?: string; price?: number };
+          return {
+            id: submissionData.id || '',
+            timestamp: submissionData.timestamp || 0,
+            product: submissionData.product || '',
+            price: submissionData.price || 0,
+            date
+          };
+        });
       }
       return [];
     } catch (error) {

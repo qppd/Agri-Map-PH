@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { classifyLocationsBySupplyDemand } from '@/lib/utils';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import HeatmapLayer from './HeatmapLayer';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -27,70 +27,70 @@ interface MapViewProps {
   className?: string;
 }
 
-// Custom marker icons for different user types
-interface CustomIconOptions {
-  userType: UserType;
-  isSelected?: boolean;
-}
+// Custom marker icons for different user types (unused but kept for future use)
+// interface CustomIconOptions {
+//   userType: UserType;
+//   isSelected?: boolean;
+// }
 
-const createCustomIcon = ({ userType, isSelected = false }: CustomIconOptions) => {
-  const colors = {
-    buyer: '#3B82F6', // Blue
-    farmer: '#10B981', // Green
-    regular: '#8B5CF6', // Purple
-  };
+// const createCustomIcon = ({ userType, isSelected = false }: CustomIconOptions) => {
+//   const colors = {
+//     buyer: '#3B82F6', // Blue
+//     farmer: '#10B981', // Green
+//     regular: '#8B5CF6', // Purple
+//   };
 
-  const color = colors[userType];
-  const size = isSelected ? 30 : 20;
+//   const color = colors[userType];
+//   const size = isSelected ? 30 : 20;
 
-  return L.divIcon({
-    className: 'custom-marker',
-    html: `
-      <div style="
-        width: ${size}px;
-        height: ${size}px;
-        background-color: ${color};
-        border: 3px solid white;
-        border-radius: 50%;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      ">
-        <div style="
-          width: ${size - 10}px;
-          height: ${size - 10}px;
-          background-color: white;
-          border-radius: 50%;
-        "></div>
-      </div>
-    `,
-    iconSize: [size, size],
-    iconAnchor: [size / 2, size / 2],
-  });
-};
+//   return L.divIcon({
+//     className: 'custom-marker',
+//     html: `
+//       <div style="
+//         width: ${size}px;
+//         height: ${size}px;
+//         background-color: ${color};
+//         border: 3px solid white;
+//         border-radius: 50%;
+//         box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+//         display: flex;
+//         align-items: center;
+//         justify-content: center;
+//       ">
+//         <div style="
+//           width: ${size - 10}px;
+//           height: ${size - 10}px;
+//           background-color: white;
+//           border-radius: 50%;
+//         "></div>
+//       </div>
+//     `,
+//     iconSize: [size, size],
+//     iconAnchor: [size / 2, size / 2],
+//   });
+// };
 
-// Component to handle map updates
-interface MapUpdaterProps {
-  center: [number, number];
-  zoom: number;
-}
+// Component to handle map updates (unused but kept for future use)
+// interface MapUpdaterProps {
+//   center: [number, number];
+//   zoom: number;
+// }
 
-function MapUpdater({ center, zoom }: MapUpdaterProps) {
-  const map = useMap();
+// function MapUpdater({ center, zoom }: MapUpdaterProps) {
+//   const map = useMap();
   
-  useEffect(() => {
-    map.setView(center, zoom);
-  }, [map, center, zoom]);
+//   useEffect(() => {
+//     map.setView(center, zoom);
+//   }, [map, center, zoom]);
   
-  return null;
-}
+//   return null;
+// }
 
 export default function MapView({ 
   priceEntries, 
   userLocation, 
   selectedProduct,
-  recommendations = [],
+  // recommendations = [], // Commented out unused parameter
   className = '' 
 }: MapViewProps) {
 

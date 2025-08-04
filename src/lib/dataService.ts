@@ -73,7 +73,7 @@ export class DataService {
         const data = snapshot.val();
         Object.keys(data).forEach(key => {
           const entry = data[key];
-          let ts = entry.timestamp;
+          const ts = entry.timestamp;
           let parsedDate: Date;
           if (!ts) {
             parsedDate = new Date(0); // fallback to epoch

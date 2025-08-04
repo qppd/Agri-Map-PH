@@ -90,6 +90,7 @@ export async function simulateAndSaveEntries(count = 2000) {
     const entry: PriceEntry = {
       id: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2),
       timestamp: new Date(),
+      userId: 'simulated-user',
       userType,
       product,
       price,

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { UserType, PriceEntry, Location } from '@/types';
 import { dataService } from '@/lib/dataService';
@@ -131,10 +132,12 @@ export default function Home() {
                   className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-green-600 transition-colors"
                 >
                   {user.photoURL ? (
-                    <img 
+                    <Image 
                       src={user.photoURL} 
                       alt={user.displayName || 'User'} 
-                      className="w-8 h-8 rounded-full"
+                      width={32}
+                      height={32}
+                      className="rounded-full"
                     />
                   ) : (
                     <User className="h-5 w-5" />

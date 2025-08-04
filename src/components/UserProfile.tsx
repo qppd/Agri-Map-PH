@@ -1,24 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { authService } from '@/lib/authService';
 import { User, LogOut, Calendar, CheckCircle, XCircle, Loader2, Facebook, Chrome, Github } from 'lucide-react';
 
 export default function UserProfile() {
   const { user, signOut, canSubmitToday, checkCanSubmitToday } = useAuth();
-  const [submissionHistory, setSubmissionHistory] = useState<any[]>([]);
+  const [submissionHistory, setSubmissionHistory] = useState<{ id: string; timestamp: number; product: string; price: number; date: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      loadSubmissionHistory();
-    }
-  }, [user]);
-
-  const loadSubmissionHistory = async () => {
+  const loadSubmissionHistory = useCallback(async () => {
     if (!user) return;
-    
     setIsLoading(true);
     try {
       const history = await authService.getUserSubmissionHistory(user.uid);
@@ -28,7 +22,13 @@ export default function UserProfile() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      loadSubmissionHistory();
+    }
+  }, [user, loadSubmissionHistory]);
 
   const handleSignOut = async () => {
     try {
@@ -74,10 +74,12 @@ export default function UserProfile() {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
           {user.photoURL ? (
-            <img 
+            <Image 
               src={user.photoURL} 
               alt={user.displayName || 'User'} 
-              className="w-12 h-12 rounded-full"
+              width={48}
+              height={48}
+              className="rounded-full"
             />
           ) : (
             <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
@@ -112,7 +114,7 @@ export default function UserProfile() {
         <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
           <div className="flex items-center space-x-2">
             <Calendar className="h-5 w-5 text-gray-600" />
-            <span className="font-medium text-gray-800">Today's Submission</span>
+            <span className="font-medium text-gray-800">Today&apos;s Submission</span>
           </div>
           <div className="flex items-center space-x-2">
             {canSubmitToday ? (
@@ -131,7 +133,7 @@ export default function UserProfile() {
         
         {!canSubmitToday && (
           <p className="text-sm text-gray-600 mt-2">
-            You've already submitted a price entry today. Come back tomorrow to contribute again!
+            You&apos;ve already submitted a price entry today. Come back tomorrow to contribute again!
           </p>
         )}
       </div>
@@ -151,7 +153,7 @@ export default function UserProfile() {
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              'Refresh'
+              "Refresh"
             )}
           </button>
         </div>

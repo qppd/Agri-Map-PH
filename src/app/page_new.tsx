@@ -38,7 +38,7 @@ export default function Home() {
     setShowForm(false);
   };
 
-  const handleSubmitPrice = async (entry: Omit<PriceEntry, 'id' | 'timestamp'>) => {
+  const handleSubmitPrice = async (entry: Omit<PriceEntry, 'id' | 'timestamp' | 'userId'>) => {
     setIsSubmitting(true);
     try {
       await dataService.addPriceEntry(entry);

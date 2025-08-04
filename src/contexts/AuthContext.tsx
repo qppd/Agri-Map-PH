@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { authService, AuthUser } from '@/lib/authService';
 
 interface AuthContextType {
@@ -21,6 +21,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [canSubmitToday, setCanSubmitToday] = useState(false);
 
+  const checkCanSubmitToday = useCallback(async () => {
+    if (user) {
+      try {
+        const canSubmit = await authService.canSubmitPriceEntryToday(user.uid);
+        setCanSubmitToday(canSubmit);
+      } catch (error) {
+        console.error('Error checking daily submission:', error);
+        setCanSubmitToday(false);
+      }
+    }
+  }, [user]);
+
   useEffect(() => {
     const unsubscribe = authService.onAuthStateChanged((authUser) => {
       setUser(authUser);
@@ -33,7 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return unsubscribe;
-  }, []);
+  }, [checkCanSubmitToday]);
 
   const signInWithFacebook = async () => {
     try {
@@ -79,18 +91,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Sign out error:', error);
       throw error;
-    }
-  };
-
-  const checkCanSubmitToday = async () => {
-    if (user) {
-      try {
-        const canSubmit = await authService.canSubmitPriceEntryToday(user.uid);
-        setCanSubmitToday(canSubmit);
-      } catch (error) {
-        console.error('Error checking daily submission:', error);
-        setCanSubmitToday(false);
-      }
     }
   };
 
