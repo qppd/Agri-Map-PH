@@ -1,6 +1,7 @@
 // Firebase configuration for AgriMap PH
 import { initializeApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
+import { getAuth } from 'firebase/auth';
 import { getAnalytics } from 'firebase/analytics';
 
 // TODO: Replace with your Firebase config
@@ -21,6 +22,9 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Realtime Database and get a reference to the service
 export const database = getDatabase(app);
+
+// Initialize Firebase Auth
+export const auth = getAuth(app);
 
 // Initialize Analytics (optional, for production use)
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;

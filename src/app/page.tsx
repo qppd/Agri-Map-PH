@@ -5,12 +5,15 @@ import dynamic from 'next/dynamic';
 import { UserType, PriceEntry, Location } from '@/types';
 import { dataService } from '@/lib/dataService';
 import { getCurrentLocation, classifyLocationsBySupplyDemand, recommendSupplyDemandPairs } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 import UserTypeSelector from '@/components/UserTypeSelector';
 import InputForm from '@/components/InputForm';
 import ProductSelector from '@/components/ProductSelector';
 import AIRecommender from '@/components/AIRecommender';
+import Login from '@/components/Login';
+import UserProfile from '@/components/UserProfile';
 import { PHILIPPINE_AGRICULTURAL_PRODUCTS } from '@/data/products';
-import { Map, TrendingUp, Users, Database, Leaf } from 'lucide-react';
+import { Map, TrendingUp, Users, Database, Leaf, LogIn, User } from 'lucide-react';
 
 // Dynamically import MapView to avoid SSR issues with Leaflet
 const MapView = dynamic(() => import('@/components/MapView'), {
@@ -26,12 +29,15 @@ const MapView = dynamic(() => import('@/components/MapView'), {
 });
 
 export default function Home() {
+  const { user, loading } = useAuth();
   const [selectedUserType, setSelectedUserType] = useState<UserType | null>(null);
   const [priceEntries, setPriceEntries] = useState<PriceEntry[]>([]);
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
 
   // Get user location on mount
   useEffect(() => {
@@ -55,7 +61,7 @@ export default function Home() {
     setShowForm(false);
   };
 
-  const handleSubmitPrice = async (entry: Omit<PriceEntry, 'id' | 'timestamp'>) => {
+  const handleSubmitPrice = async (entry: Omit<PriceEntry, 'id' | 'timestamp' | 'userId'>) => {
     setIsSubmitting(true);
     try {
       await dataService.addPriceEntry(entry);
@@ -64,7 +70,8 @@ export default function Home() {
       alert('Price information submitted successfully!');
     } catch (error) {
       console.error('Error submitting price:', error);
-      alert('Failed to submit price information. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to submit price information. Please try again.';
+      alert(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -114,6 +121,35 @@ export default function Home() {
                   <span>{[...new Set(priceEntries.map(e => e.userType))].length} user types</span>
                 </div>
               </div>
+              
+              {/* Authentication Section */}
+              {loading ? (
+                <div className="w-8 h-8 animate-spin rounded-full border-2 border-green-600 border-t-transparent"></div>
+              ) : user ? (
+                <button
+                  onClick={() => setShowProfile(!showProfile)}
+                  className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-green-600 transition-colors"
+                >
+                  {user.photoURL ? (
+                    <img 
+                      src={user.photoURL} 
+                      alt={user.displayName || 'User'} 
+                      className="w-8 h-8 rounded-full"
+                    />
+                  ) : (
+                    <User className="h-5 w-5" />
+                  )}
+                  <span className="hidden sm:inline">{user.displayName || 'User'}</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowLogin(true)}
+                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                >
+                  <LogIn className="h-4 w-4" />
+                  <span>Sign In</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -283,6 +319,46 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      {/* Login Modal */}
+      {showLogin && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-screen overflow-y-auto">
+            <div className="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Sign In</h2>
+              <button
+                onClick={() => setShowLogin(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4">
+              <Login onClose={() => setShowLogin(false)} />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Profile Modal */}
+      {showProfile && user && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-screen overflow-y-auto">
+            <div className="sticky top-0 bg-white p-4 border-b flex justify-between items-center">
+              <h2 className="text-lg font-semibold">Profile</h2>
+              <button
+                onClick={() => setShowProfile(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4">
+              <UserProfile />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="bg-gray-800 text-white mt-16">

@@ -2,6 +2,7 @@
 import { database } from './firebase';
 import { ref, push, onValue, off, query, orderByKey, limitToLast, DatabaseReference } from 'firebase/database';
 import { PriceEntry } from '@/types';
+import { authService } from './authService';
 
 // Database paths
 const PRICE_ENTRIES_PATH = 'priceEntries';
@@ -22,18 +23,36 @@ export class DataService {
   }
 
   // Add a new price entry
-  public async addPriceEntry(entry: Omit<PriceEntry, 'id' | 'timestamp'>): Promise<string> {
+  public async addPriceEntry(entry: Omit<PriceEntry, 'id' | 'timestamp' | 'userId'>): Promise<string> {
     try {
+      // Get current user
+      const currentUser = authService.getCurrentUser();
+      if (!currentUser) {
+        throw new Error('User must be authenticated to submit price entries');
+      }
+
+      // Check if user can submit today
+      const canSubmit = await authService.canSubmitPriceEntryToday(currentUser.uid);
+      if (!canSubmit) {
+        throw new Error('You have already submitted a price entry today. Please try again tomorrow.');
+      }
+
       const entryWithTimestamp: Omit<PriceEntry, 'id'> = {
         ...entry,
+        userId: currentUser.uid,
         timestamp: new Date(),
       };
 
       const newEntryRef = await push(this.priceEntriesRef, entryWithTimestamp);
-      return newEntryRef.key!;
+      const entryId = newEntryRef.key!;
+
+      // Record the daily submission
+      await authService.recordDailySubmission(currentUser.uid, entryId);
+
+      return entryId;
     } catch (error) {
       console.error('Error adding price entry:', error);
-      throw new Error('Failed to add price entry');
+      throw error;
     }
   }
 
@@ -50,19 +69,32 @@ export class DataService {
 
     const unsubscribe = onValue(priceEntriesQuery, (snapshot) => {
       const entries: PriceEntry[] = [];
-      
       if (snapshot.exists()) {
         const data = snapshot.val();
         Object.keys(data).forEach(key => {
           const entry = data[key];
+          let ts = entry.timestamp;
+          let parsedDate: Date;
+          if (!ts) {
+            parsedDate = new Date(0); // fallback to epoch
+          } else if (typeof ts === 'string' || typeof ts === 'number') {
+            parsedDate = new Date(ts);
+          } else if (typeof ts === 'object' && ts.seconds) {
+            // Firestore Timestamp object
+            parsedDate = new Date(ts.seconds * 1000);
+          } else {
+            parsedDate = new Date(ts);
+          }
+          if (isNaN(parsedDate.getTime())) {
+            parsedDate = new Date(0);
+          }
           entries.push({
             id: key,
             ...entry,
-            timestamp: new Date(entry.timestamp),
+            timestamp: parsedDate,
           });
         });
       }
-
       // Sort by timestamp (most recent first)
       entries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
       callback(entries);

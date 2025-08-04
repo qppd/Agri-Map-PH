@@ -4,19 +4,21 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { UserType, AgriculturalProduct, TrafficStatus, MarketCondition, Location, PriceEntry, WeatherData } from '@/types';
 import { MARKET_CONDITIONS, TRAFFIC_STATUS, PHILIPPINE_AGRICULTURAL_PRODUCTS } from '@/data/products';
-import { getCurrentLocation, fetchWeatherData, reverseGeocode, canSubmitPriceEntry, recordPriceEntrySubmission } from '@/lib/utils';
+import { getCurrentLocation, fetchWeatherData, reverseGeocode } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
 // Dynamically import LocationPicker to avoid SSR issues
 const LocationPicker = dynamic(() => import('./LocationPicker'), { ssr: false });
 import ProductSelector from './ProductSelector';
-import { MapPin, Thermometer, DollarSign, Send, Loader2 } from 'lucide-react';
+import { MapPin, Thermometer, DollarSign, Send, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface InputFormProps {
   userType: UserType;
-  onSubmit: (entry: Omit<PriceEntry, 'id' | 'timestamp'>) => void;
+  onSubmit: (entry: Omit<PriceEntry, 'id' | 'timestamp' | 'userId'>) => void;
   isSubmitting?: boolean;
 }
 
 export default function InputForm({ userType, onSubmit, isSubmitting = false }: InputFormProps) {
+  const { user, canSubmitToday, checkCanSubmitToday } = useAuth();
   const [selectedProduct, setSelectedProduct] = useState<AgriculturalProduct | null>(null);
   const [price, setPrice] = useState<string>('');
   const [trafficStatus, setTrafficStatus] = useState<TrafficStatus>('moderate');
@@ -57,6 +59,16 @@ export default function InputForm({ userType, onSubmit, isSubmitting = false }: 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!user) {
+      alert('Please sign in to submit price entries.');
+      return;
+    }
+
+    if (!canSubmitToday) {
+      alert('You have already submitted a price entry today. Please try again tomorrow.');
+      return;
+    }
+
     if (!selectedProduct || !price || !location) {
       alert('Please fill in all required fields and enable location access.');
       return;
@@ -68,13 +80,7 @@ export default function InputForm({ userType, onSubmit, isSubmitting = false }: 
       return;
     }
 
-    // Debounce: Bawal mag-submit ng price entry sa parehong product/location sa loob ng 1 hour
-    if (!canSubmitPriceEntry(userType, selectedProduct.id, location)) {
-      alert('Nakapag-submit ka na ng price entry dito sa product/location na ito sa loob ng 1 hour. Please try again later.');
-      return;
-    }
-
-    const entry: Omit<PriceEntry, 'id' | 'timestamp'> = {
+    const entry: Omit<PriceEntry, 'id' | 'timestamp' | 'userId'> = {
       userType,
       product: selectedProduct,
       price: priceNumber,
@@ -87,14 +93,15 @@ export default function InputForm({ userType, onSubmit, isSubmitting = false }: 
     };
 
     onSubmit(entry);
-    // I-record ang submission time para sa debounce
-    recordPriceEntrySubmission(userType, selectedProduct.id, location);
 
     // Reset form
     setSelectedProduct(null);
     setPrice('');
     setMarketCondition('normal');
     setNotes('');
+    
+    // Refresh the canSubmitToday status
+    checkCanSubmitToday();
   };
 
   const getUserTypeLabel = () => {
@@ -125,6 +132,44 @@ export default function InputForm({ userType, onSubmit, isSubmitting = false }: 
           As a {getUserTypeLabel()}, help build our agricultural price database
         </p>
       </div>
+
+      {/* Authentication Status */}
+      {user ? (
+        <div className={`mb-6 p-4 rounded-lg border ${canSubmitToday 
+          ? 'bg-green-50 border-green-200' 
+          : 'bg-yellow-50 border-yellow-200'
+        }`}>
+          <div className="flex items-center space-x-2">
+            {canSubmitToday ? (
+              <>
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <span className="font-medium text-green-800">Ready to submit</span>
+              </>
+            ) : (
+              <>
+                <AlertCircle className="h-5 w-5 text-yellow-600" />
+                <span className="font-medium text-yellow-800">Daily limit reached</span>
+              </>
+            )}
+          </div>
+          <p className="text-sm mt-1 text-gray-600">
+            {canSubmitToday 
+              ? 'You can submit one price entry today.' 
+              : 'You\'ve already submitted your daily price entry. Come back tomorrow!'
+            }
+          </p>
+        </div>
+      ) : (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="h-5 w-5 text-red-600" />
+            <span className="font-medium text-red-800">Sign in required</span>
+          </div>
+          <p className="text-sm mt-1 text-red-700">
+            Please sign in to submit price entries and help build our database.
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Product Selection */}
@@ -277,13 +322,23 @@ export default function InputForm({ userType, onSubmit, isSubmitting = false }: 
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={isSubmitting || !selectedProduct || !price || !location}
+          disabled={isSubmitting || !user || !canSubmitToday || !selectedProduct || !price || !location}
           className="w-full flex items-center justify-center space-x-2 px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {isSubmitting ? (
             <>
               <Loader2 className="h-5 w-5 animate-spin" />
               <span>Submitting...</span>
+            </>
+          ) : !user ? (
+            <>
+              <AlertCircle className="h-5 w-5" />
+              <span>Sign in to Submit</span>
+            </>
+          ) : !canSubmitToday ? (
+            <>
+              <CheckCircle className="h-5 w-5" />
+              <span>Daily Limit Reached</span>
             </>
           ) : (
             <>

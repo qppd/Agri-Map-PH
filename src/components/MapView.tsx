@@ -94,6 +94,11 @@ export default function MapView({
   className = '' 
 }: MapViewProps) {
 
+  // Philippines bounds - restricts camera to PH area only
+  const philippinesBounds: [[number, number], [number, number]] = [
+    [3.0, 115.0],   // Southwest corner (lower-left)
+    [22.0, 130.0]   // Northeast corner (upper-right)
+  ];
 
   // Center the map on the user's location or the Philippines
   const mapCenter: [number, number] = userLocation
@@ -171,7 +176,16 @@ export default function MapView({
           </div>
         </div>
         {/* MapContainer and marker rendering */}
-        <MapContainer center={mapCenter} zoom={7} style={{ height: '500px', width: '100%' }} ref={mapRef as React.RefObject<L.Map>}>
+        <MapContainer 
+          center={mapCenter} 
+          zoom={7} 
+          minZoom={6}
+          maxZoom={18}
+          maxBounds={philippinesBounds}
+          maxBoundsViscosity={1.0}
+          style={{ height: '500px', width: '100%' }} 
+          ref={mapRef as React.RefObject<L.Map>}
+        >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="&copy; <a href='https://www.openstreetmap.org/copyright'>OpenStreetMap</a> contributors"

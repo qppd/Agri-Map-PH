@@ -7,6 +7,8 @@ AgriMap PH is a Next.js React web application that enables farmers, buyers, and 
 ## 🚀 Features
 
 ### 🧩 Core Features
+- **Facebook OAuth Authentication**: Secure login with Facebook to ensure data quality
+- **Daily Submission Limits**: One verified price entry per user per day to prevent spam
 - **Crowdsourced Data Input**: Users can input agricultural product prices in their barangay
 - **Real-time Sync**: Instant data synchronization using Firebase Realtime Database
 - **Interactive Mapping**: OpenStreetMap integration with custom markers and overlays
@@ -14,7 +16,8 @@ AgriMap PH is a Next.js React web application that enables farmers, buyers, and 
 - **AI Recommendations**: Basic machine learning suggestions for optimal buying/selling locations
 
 ### 📱 User Experience
-- **No Registration Required**: Simple, accessible interface encouraging public participation
+- **Secure Authentication**: Facebook OAuth for trusted user verification
+- **User Profile Management**: Track submission history and daily limits
 - **Mobile-First Design**: Responsive interface optimized for mobile devices
 - **Auto-captured Data**: Automatic location, date/time, and weather data collection
 - **Real-time Visualization**: Live heatmap overlays showing supply/demand patterns
@@ -24,10 +27,12 @@ AgriMap PH is a Next.js React web application that enables farmers, buyers, and 
 - **Location Data**: GPS coordinates with barangay-level precision
 - **Market Conditions**: Traffic status, market conditions, and weather integration
 - **Price Tracking**: Real-time price monitoring with historical data
+- **User Verification**: All entries linked to authenticated users for accountability
 
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 15 with TypeScript and App Router
+- **Authentication**: Firebase Auth with Facebook OAuth provider
 - **Styling**: Tailwind CSS for responsive design
 - **Mapping**: Leaflet.js with React-Leaflet for interactive maps
 - **Backend**: Firebase Realtime Database for real-time data sync
@@ -35,10 +40,24 @@ AgriMap PH is a Next.js React web application that enables farmers, buyers, and 
 - **Weather**: OpenWeatherMap API integration
 - **Location**: HTML5 Geolocation API with reverse geocoding
 
-## 📦 Key Components
+## � Authentication & Security Features
 
+- **Facebook OAuth Integration**: Secure login using Facebook accounts
+- **Daily Submission Limits**: One price entry per user per day to ensure data quality
+- **User Profile Management**: Track submission history and account details
+- **Authenticated Data Submission**: All price entries linked to verified users
+- **Real-time Auth State**: Seamless authentication state management across the app
+- **Secure Database Rules**: Firebase security rules prevent unauthorized access
+- **User Data Privacy**: Each user's submission history is private and secure
+
+## �📦 Key Components
+
+- **`AuthService`**: Handles Facebook OAuth and user session management
+- **`AuthContext`**: React context for global authentication state
+- **`Login`**: Facebook OAuth login component with error handling
+- **`UserProfile`**: User account management and submission history
 - **`MapView`**: OpenStreetMap with overlays and real-time markers
-- **`InputForm`**: User data entry for prices and market conditions
+- **`InputForm`**: Authenticated user data entry for prices and market conditions
 - **`UserTypeSelector`**: Role-based interface selection
 - **`ProductSelector`**: Dropdown for Philippine agricultural products
 - **`DataFetcher`**: Weather, location, and timestamp collection
@@ -95,16 +114,36 @@ AgriMap PH is a Next.js React web application that enables farmers, buyers, and 
 
 1. Create a new Firebase project at [Firebase Console](https://console.firebase.google.com/)
 2. Enable Realtime Database
-3. Set up database rules for public read/write (adjust for production):
+3. **Enable Authentication with Facebook** (see `FIREBASE_AUTH_SETUP.md` for detailed instructions)
+4. Set up secure database rules for authenticated users:
    ```json
    {
      "rules": {
-       ".read": true,
-       ".write": true
+       "priceEntries": {
+         ".read": true,
+         ".write": "auth != null",
+         "$entryId": {
+           ".validate": "newData.hasChildren(['userId', 'userType', 'product', 'price', 'location', 'timestamp']) && newData.child('userId').val() == auth.uid"
+         }
+       },
+       "users": {
+         "$uid": {
+           ".read": "auth != null && auth.uid == $uid",
+           ".write": "auth != null && auth.uid == $uid"
+         }
+       },
+       "userSubmissions": {
+         "$uid": {
+           ".read": "auth != null && auth.uid == $uid",
+           ".write": "auth != null && auth.uid == $uid"
+         }
+       }
      }
    }
    ```
-4. Get your Firebase configuration from Project Settings > General > Your apps
+5. Get your Firebase configuration from Project Settings > General > Your apps
+
+**⚠️ Important**: For authentication to work properly, you must complete the Facebook OAuth setup as described in `FIREBASE_AUTH_SETUP.md`
 
 ## 📊 Data Structure
 

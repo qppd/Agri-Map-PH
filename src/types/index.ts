@@ -39,7 +39,7 @@ export interface AgriculturalProduct {
 
 export interface PriceEntry {
   id: string;
-  userId?: string;
+  userId: string;
   userType: UserType;
   product: AgriculturalProduct;
   price: number;
